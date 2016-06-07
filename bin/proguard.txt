@@ -1,0 +1,12 @@
+# view res/layout/main_canvas.xml #generated:10
+-keep class com.example.battlefortheplanetearth.CanvasView { <init>(...); }
+
+# view AndroidManifest.xml #generated:15
+-keep class com.example.battlefortheplanetearth.OpenGLES20Activity { <init>(...); }
+
+# onClick res/layout/main_canvas.xml #generated:24
+-keepclassmembers class * { *** clearCanvas(...); }
+
+# onClick res/layout/main_canvas.xml #generated:16
+-keepclassmembers class * { *** switchColor(...); }
+

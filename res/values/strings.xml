@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Battle for The Planet Earth 2</string>
+	<string name="my_string">This is <a href="http://www.android4beginners.com">a link</a> in a text</string>
+</resources>

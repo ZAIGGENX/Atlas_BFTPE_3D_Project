@@ -374,7 +374,7 @@ public class Mesh {
 
 	}
 
-	ArrayList<Integer> myIndices = new ArrayList<Integer>(100); // normals
+	ArrayList<Integer> myIndices = new ArrayList<Integer>(300); // normals
 
 	public int loadFile(int resource_3D) {
 		//Log.d(LOG_TAG, "Starting loadFile");
@@ -406,9 +406,9 @@ public class Mesh {
 			StringTokenizer t = null;
 			StringTokenizer t_face = null;
 
-			ArrayList<Float> vs = new ArrayList<Float>(100); // vertices
-			ArrayList<Float> tc = new ArrayList<Float>(100); // texture coords
-			ArrayList<Float> ns = new ArrayList<Float>(100); // normals
+			ArrayList<Float> vs = new ArrayList<Float>(300); // vertices
+			ArrayList<Float> tc = new ArrayList<Float>(300); // texture coords
+			ArrayList<Float> ns = new ArrayList<Float>(300); // normals
 			
 
 			int numVertices = 0;

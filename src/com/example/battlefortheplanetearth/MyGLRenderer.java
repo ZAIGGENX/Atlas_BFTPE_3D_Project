@@ -53,23 +53,22 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
 
     private enum OBJECTS_3D {
         //OBJECT    ( index, Resource ID, Resource Texture ID )
-        ATLAS       (0, R.raw.atlas, R.raw.flat_color),
-        CUBE        (1, R.raw.cube, R.raw.texture1),
-        LAND        (2, R.raw.land, R.raw.moon_texture),
-        SPHERE      (3, R.raw.sphere, R.raw.moon_texture);
+        ATLAS       (R.raw.atlas, R.raw.flat_color),
+        CUBE        (R.raw.cube, R.raw.texture1),
+        LAND        (R.raw.land, R.raw.moon_texture),
+        SPHERE      (R.raw.sphere, R.raw.moon_texture),
+        MATRIX      (R.raw.matrix1, R.raw.texture1);
+        //BHOUSE      (R.raw.bhouse, R.raw.texture1);
 
-        private final int index;
         private final int resource_id;
         private final int texture_id;
 
         //enum constructor
-        OBJECTS_3D(int index, int resource_id, int texture_id) {
-            this.index = index;
+        OBJECTS_3D(int resource_id, int texture_id) {
             this.resource_id = resource_id;
             this.texture_id = texture_id;
         }
 
-        private int index() { return index; }
         private int resource_id() { return resource_id; }
         private int texture_id() { return texture_id; }
 
@@ -220,11 +219,11 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
         mSquare.draw(mMVPMatrix);
 
         //object3D.get(0).setRotationAngleX(angle);
-        object3D.get(OBJECTS_3D.ATLAS.index()).setPosition(0.0f, 5.0f, zTemp);
-        object3D.get(OBJECTS_3D.ATLAS.index()).setLightPos(-camera_EyeX,camera_EyeY,atlasPos[2] - camera_EyeZ);
-        object3D.get(OBJECTS_3D.ATLAS.index()).setRotationAngleX(0.0f);
-        object3D.get(OBJECTS_3D.ATLAS.index()).setRotationAngleY(-30.0f);
-        object3D.get(OBJECTS_3D.ATLAS.index()).setRotationAngleZ(0.0f);
+        object3D.get(OBJECTS_3D.ATLAS.ordinal()).setPosition(0.0f, 5.0f, zTemp);
+        object3D.get(OBJECTS_3D.ATLAS.ordinal()).setLightPos(-camera_EyeX,camera_EyeY,atlasPos[2] - camera_EyeZ);
+        object3D.get(OBJECTS_3D.ATLAS.ordinal()).setRotationAngleX(0.0f);
+        object3D.get(OBJECTS_3D.ATLAS.ordinal()).setRotationAngleY(-30.0f);
+        object3D.get(OBJECTS_3D.ATLAS.ordinal()).setRotationAngleZ(0.0f);
         //Log.d("LIGHT", "LIGHT POS ["+camera_EyeX+"]["+camera_EyeY+"]["+(camera_EyeZ-atlasPos[2])+"]");
         
 
@@ -237,6 +236,8 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
         object3D.get(3).setRotationAngleY(angle);
         object3D.get(3).setPosition(0.0f, 0.0f, 300.0f);
         object3D.get(3).setScale(80.0f, 80.0f, 80.0f);
+
+        object3D.get(OBJECTS_3D.MATRIX.ordinal()).setRotationAngleY(angle);
 
         for(int i = 0; i < object3D.size() ; i++)
             object3D.get(i).draw(mMVPMatrix);

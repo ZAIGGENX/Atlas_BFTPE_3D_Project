@@ -69,4 +69,8 @@ public class Object3D {
 		mMesh.setLightPos(x, y, z);
 	}
 
+	public void setLightColor(float r, float g, float b, float a){
+		mMesh.setLightColor(r, g, b, a);
+	}
+
 }

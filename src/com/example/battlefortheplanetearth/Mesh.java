@@ -187,7 +187,7 @@ public class Mesh {
 		float[] lightP = {6.0f, 10.0f, -13.0f, 1.0f};
 		this.lightPos = lightP;
 
-		float[] lightC = {0.2f, 0.2f, 0.7f, 1.0f};
+		float[] lightC = {0.3f, 0.3f, 0.7f, 1.0f};
 		this.lightColor = lightC;
 
 		// material properties
@@ -231,8 +231,6 @@ public class Mesh {
 
 		//mMVPMatrix = mvpMatrix;
 
-
-
         // Add program to OpenGL environment
         GLES20.glUseProgram(mProgram);
 
@@ -264,7 +262,14 @@ public class Mesh {
 
 		// Set the ModelViewProjectionMatrix
 		float tempMatrix[] = new float[16]; 
-		//Matrix.multiplyMM(mMMatrix, 0, mVMatrix, 0, mMMatrix, 0);
+
+		//First position multiply then rotate to totate the axis too
+		//Matrix.multiplyMM(tempMatrix, 0, mRotXMatrix, 0, mPositionMatrix, 0);
+		//Matrix.multiplyMM(tempMatrix, 0, mRotYMatrix, 0, tempMatrix, 0);
+		//Matrix.multiplyMM(tempMatrix, 0, mRotZMatrix, 0, tempMatrix, 0);
+		//Matrix.multiplyMM(mMVPMatrix, 0, mScaleMatrix, 0, tempMatrix, 0);
+		//Matrix.multiplyMM(mMVPMatrix, 0, mvpMatrix, 0, mMVPMatrix, 0);
+
 		Matrix.multiplyMM(tempMatrix, 0, mRotYMatrix, 0, mRotXMatrix, 0);
 		Matrix.multiplyMM(tempMatrix, 0, mRotZMatrix, 0, tempMatrix, 0);
 		Matrix.multiplyMM(tempMatrix, 0, mScaleMatrix, 0, tempMatrix, 0);
@@ -845,6 +850,13 @@ public class Mesh {
 		lightPos[1] = y;
 		lightPos[2] = z;
 	}	
+
+	public void setLightColor(float r, float g, float b, float a){
+		lightColor[0] = r;
+		lightColor[1] = g;
+		lightColor[2] = b;
+		lightColor[3] = a;
+	}
 
 	public float [] getPosition(){
 		return getPos;

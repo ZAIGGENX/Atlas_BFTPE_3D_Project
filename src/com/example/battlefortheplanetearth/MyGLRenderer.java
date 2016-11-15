@@ -47,17 +47,30 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
     public urlList mUrlList;
 
     public static int vID, fID;
+    boolean mHasDepthTextureExtension = false;
 
     Context mContext;
     Controls mControls;
+    private AtlasMovement atlasMov;
+    public boolean AtlasCameraActive;
+
+    // texture file ids
+    int [] textures = {
+        R.raw.flat_color,
+        R.raw.texture1,
+        R.raw.moon_texture,
+        R.raw.metal,
+        R.raw.white_texture
+    };
 
     private enum OBJECTS_3D {
         //OBJECT    ( index, Resource ID, Resource Texture ID )
         ATLAS       (R.raw.atlas, R.raw.flat_color),
-        CUBE        (R.raw.cube, R.raw.texture1),
+        CUBE        (R.raw.cube, R.raw.white_texture),
         LAND        (R.raw.land, R.raw.moon_texture),
-        SPHERE      (R.raw.sphere, R.raw.moon_texture),
-        MATRIX      (R.raw.matrix1, R.raw.texture1);
+        FLOOR          (R.raw.floor, R.raw.metal),
+        SPHERE      (R.raw.sphere, R.raw.moon_texture);
+        //MATRIX      (R.raw.matrix1, R.raw.texture1);
         //BHOUSE      (R.raw.bhouse, R.raw.texture1);
 
         private final int resource_id;
@@ -89,6 +102,17 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
         mUrlList.loadFile();
 
         getShadersID();
+
+        atlasMov = new AtlasMovement();
+        atlasMov.start();
+
+        AtlasCameraActive = true;
+
+        // Test OES_depth_texture extension
+        //String extensions = GLES20.glGetString(GLES20.GL_EXTENSIONS);
+        
+        //if (extensions.contains("OES_depth_texture"))
+          //  mHasDepthTextureExtension = true;
 
     }
 
@@ -146,70 +170,104 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
 
     double circleAngle, xTemp, xPointerFixed, lastAngle;
     boolean doThisOnce = true;
+    boolean useDebugRotateCamera = false;
+
+    float multiColorVar;
+    boolean switchIncrement = true;
 
     public void onDrawFrame(GL10 unused) {
         // Redraw background color
         float[] scratch = new float[16];
 
+        atlasMov.updateMovement();
 
         // Create a rotation transformation for the triangle
-        long time = SystemClock.uptimeMillis() % 4000L;
-        float angle = 0.090f * ((int) time);
+        long time = SystemClock.uptimeMillis() % 900000L;
+        float angle = 0.001f * ((int) time);
 
         zTemp += 0.040f;
         if(zTemp > 200)
             zTemp = 0;
 
+        //Playing with shader color 
+        if(multiColorVar <= 1.0f && switchIncrement){
+            multiColorVar += 0.01f;
+            if(multiColorVar >= 1.0f)
+                switchIncrement = false;
+        }
+
+        if(multiColorVar >= 0.0f && switchIncrement == false){
+            multiColorVar -= 0.01f;
+            if(multiColorVar <= 0.0f)
+                switchIncrement = true;
+        }
+
         GLES20.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
         
-        float [] atlasPos = object3D.get(0).getPosition();
+        //Focus the camera to an object on th scene.
+        float [] _3dObject_position = object3D.get( OBJECTS_3D.ATLAS.ordinal() ).getPosition();
 
         //x  =  h + r cos(t)
         //y  =  k + r sin(t)
 
         //Log.e(TAG, "xyTouchPointers X: "+ mControls.getXPointer());
 
-        if(Controls.isPointerPressed){
+        //Rotate the camera over the object.
+        if(useDebugRotateCamera){
+            if(Controls.isPointerPressed){
 
-            if(doThisOnce){
-                xTemp = mControls.getXPointer();
-                doThisOnce = false;
-                lastAngle = circleAngle; //TO store the last angle and not reset the camera
+                if(doThisOnce){
+                    xTemp = mControls.getXPointer();
+                    doThisOnce = false;
+                    lastAngle = circleAngle; //TO store the last angle and not reset the camera
+                }
+
+                if(Controls.isPointerMove){
+
+                //Log.e(TAG, "DRAG CAMERA: "+  ( mControls.getXPointer() - xTemp ) );
+
+                xPointerFixed = mControls.getXPointer() - xTemp;
+
+                //circleAngle += 0.02; //Camera Rotation Speed
+                circleAngle = xPointerFixed * 0.02 + lastAngle; //Camera Rotation Speed
+                if(circleAngle > 360)
+                    circleAngle = 0;
+                }
+
+            } else {
+                doThisOnce = true;
+                xTemp = 0.0f;
             }
-
-            if(Controls.isPointerMove){
-
-            //Log.e(TAG, "DRAG CAMERA: "+  ( mControls.getXPointer() - xTemp ) );
-
-            xPointerFixed = mControls.getXPointer() - xTemp;
-
-            //circleAngle += 0.02; //Camera Rotation Speed
-            circleAngle = xPointerFixed * 0.02 + lastAngle; //Camera Rotation Speed
-            if(circleAngle > 360)
-                circleAngle = 0;
-            }
-
-        } else {
-            doThisOnce = true;
-            xTemp = 0.0f;
         }
 
         //Using the Circle Ecuation
         //to rotate camera around a object. In this case the Ship.
         float cameraOffset = 7.0f; //The Radius
-        float xCam = atlasPos[0] + cameraOffset * (float)Math.cos(circleAngle);
-        float zCam = atlasPos[2] + cameraOffset * (float)Math.sin(circleAngle);
+        float xCam = _3dObject_position[0] + cameraOffset * (float)Math.cos(circleAngle);
+        float zCam = _3dObject_position[2] + cameraOffset * (float)Math.sin(circleAngle);
 
         // Set the camera position (View matrix)
         //float[] rm, int rmOffset, float eyeX, float eyeY, float eyeZ, float centerX, float centerY, float centerZ, float upX, float upY, float upZ
-        camera_EyeX = xCam;
-        camera_EyeY = 3f;
-        camera_EyeZ = zCam;
-        
-        camera_CenterX = atlasPos[0];
-        camera_CenterY = atlasPos[1];
-        camera_CenterZ = atlasPos[2];
+        if(useDebugRotateCamera){
+            camera_EyeX = xCam;
+            camera_EyeY = 3f;
+            camera_EyeZ = zCam;
+        } else {
+            camera_EyeX = atlasMov.getX();
+            camera_EyeY = 3f;
+            camera_EyeZ = atlasMov.getZ() - cameraOffset ;
+        }
+
+        if(AtlasCameraActive){
+            camera_CenterX = atlasMov.getX();
+            camera_CenterY = atlasMov.getY();
+            camera_CenterZ = atlasMov.getZ();
+        } else {
+            camera_CenterX = _3dObject_position[0];
+            camera_CenterY = _3dObject_position[1];
+            camera_CenterZ = _3dObject_position[2];
+        }
 
         Matrix.setLookAtM(mViewMatrix, 0, camera_EyeX, camera_EyeY, camera_EyeZ, camera_CenterX, camera_CenterY, camera_CenterZ, 0f, 1.0f, 0.0f);
 
@@ -218,31 +276,40 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
 
         mSquare.draw(mMVPMatrix);
 
-        //object3D.get(0).setRotationAngleX(angle);
-        object3D.get(OBJECTS_3D.ATLAS.ordinal()).setPosition(0.0f, 5.0f, zTemp);
-        object3D.get(OBJECTS_3D.ATLAS.ordinal()).setLightPos(-camera_EyeX,camera_EyeY,atlasPos[2] - camera_EyeZ);
-        object3D.get(OBJECTS_3D.ATLAS.ordinal()).setRotationAngleX(0.0f);
-        object3D.get(OBJECTS_3D.ATLAS.ordinal()).setRotationAngleY(-30.0f);
-        object3D.get(OBJECTS_3D.ATLAS.ordinal()).setRotationAngleZ(0.0f);
-        //Log.d("LIGHT", "LIGHT POS ["+camera_EyeX+"]["+camera_EyeY+"]["+(camera_EyeZ-atlasPos[2])+"]");
+        object3D.get( OBJECTS_3D.ATLAS.ordinal() ).setRotationAngleX(atlasMov.rotationAngleX());
+        object3D.get( OBJECTS_3D.ATLAS.ordinal() ).setRotationAngleY(atlasMov.rotationAngleY());
+        object3D.get( OBJECTS_3D.ATLAS.ordinal() ).setRotationAngleZ(atlasMov.rotationAngleZ());
+
+        object3D.get( OBJECTS_3D.ATLAS.ordinal() ).setPosition(atlasMov.getX(), atlasMov.getY(), atlasMov.getZ());
+        object3D.get( OBJECTS_3D.ATLAS.ordinal() ).setLightPos(-camera_EyeX,camera_EyeY,_3dObject_position[2] - camera_EyeZ);
+        object3D.get( OBJECTS_3D.ATLAS.ordinal() ).setLightColor(0.2f, 0.2f, 0.2f, 1.0f);
+        //Log.d("LIGHT", "LIGHT POS ["+camera_EyeX+"]["+camera_EyeY+"]["+(camera_EyeZ-_3dObject_position[2])+"]");
         
 
-        object3D.get(1).setPosition(0.0f, 1.0f, 10.0f);
-        //object3D.get(1).setScale(0.1f, 0.1f, 0.1f);
+        object3D.get( OBJECTS_3D.CUBE.ordinal() ).setLightPos(1.0f,10.0f,1.0f);
+        object3D.get( OBJECTS_3D.CUBE.ordinal() ).setPosition(0.0f, 1.0f, 10.0f);
+        object3D.get( OBJECTS_3D.CUBE.ordinal() ).setScale(2.0f, 2.0f, 2.0f);
+        object3D.get( OBJECTS_3D.CUBE.ordinal() ).setLightColor(0.5f, 0.5f, 0.5f, 1.0f);
+
+        object3D.get( OBJECTS_3D.FLOOR.ordinal() ).setLightPos(1.0f,10.0f,1.0f);
+        object3D.get( OBJECTS_3D.FLOOR.ordinal() ).setPosition(0.0f, 0.0f, 0.0f);
+        object3D.get( OBJECTS_3D.FLOOR.ordinal() ).setScale(1.0f, 1.0f, 1.0f);
+        object3D.get( OBJECTS_3D.FLOOR.ordinal() ).setLightColor(0.3f, 0.3f, 0.1f, 1.0f);
         
-        object3D.get(2).setPosition(0.0f, -1.0f, 0.0f);
-        object3D.get(2).setScale(400.0f, 10.0f, 400.0f);
+        object3D.get( OBJECTS_3D.LAND.ordinal() ).setPosition(0.0f, -1.0f, 0.0f);
+        object3D.get( OBJECTS_3D.LAND.ordinal() ).setScale(1000.0f, 10.0f, 1000.0f);
+        object3D.get( OBJECTS_3D.LAND.ordinal() ).setLightColor(0.2f, 0.4f, 0.6f, 1.0f);
 
-        object3D.get(3).setRotationAngleY(angle);
-        object3D.get(3).setPosition(0.0f, 0.0f, 300.0f);
-        object3D.get(3).setScale(80.0f, 80.0f, 80.0f);
 
-        object3D.get(OBJECTS_3D.MATRIX.ordinal()).setRotationAngleY(angle);
+        object3D.get( OBJECTS_3D.SPHERE.ordinal() ).setRotationAngleY(angle);
+        object3D.get( OBJECTS_3D.SPHERE.ordinal() ).setPosition(0.0f, 0.0f, 300.0f);
+        object3D.get( OBJECTS_3D.SPHERE.ordinal() ).setScale(80.0f, 80.0f, 80.0f);
 
-        for(int i = 0; i < object3D.size() ; i++)
-            object3D.get(i).draw(mMVPMatrix);
-        //mSquare.draw(scratch);
-        //mCube.draw(scratch);
+        //object3D.get(OBJECTS_3D.MATRIX.ordinal()).setRotationAngleY(angle);
+
+        for( Object3D o : object3D  )
+            o.draw(mMVPMatrix);
+
         
     }
 
@@ -324,9 +391,6 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
     }
 
     private void setupTextures() {
-
-            // texture file ids
-            int [] textures = {R.raw.flat_color, R.raw.texture1, R.raw.moon_texture, R.raw.metal};
 
             int [] tex_temp =  new int[textures.length];
             for(int i = 0; i < textures.length; i++)

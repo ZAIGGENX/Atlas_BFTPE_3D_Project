@@ -41,57 +41,62 @@ public class OpenGLES20Activity extends Activity {
         
     }
 
-    private int mActivePointerId;
+    private final int MAX_POINTERS = 4;
+    private int [] mActivePointerId = new int[MAX_POINTERS];
+    private int [] pointerIndex = new int[MAX_POINTERS];
 
 	@Override
 	public boolean onTouchEvent(MotionEvent e) {
 
-	    // Get the pointer ID
-	    mActivePointerId = e.getPointerId(0);
-
     	int action = (e.getAction() & MotionEvent.ACTION_MASK);
     	int pointCount = e.getPointerCount();
 
-    	Log.d("ShaderActivity", "POINTER COUNT ["+pointCount+"]" );
+    	//Log.d("pointer", "POINTER COUNT ["+pointCount+"]" );
 
-	    int pointerIndex = e.findPointerIndex(mActivePointerId);
+    	float x[] = new float[MAX_POINTERS];
+    	float y[] = new float[MAX_POINTERS];
 
-		Log.d("ShaderActivity", "POINTER INDEX ["+pointerIndex+"]" );
+	    // Get the pointer ID
+	    if(pointCount<=MAX_POINTERS){
+		    for(int i=0;i<pointCount;i++){
+		    	mActivePointerId[i] = e.getPointerId(i);
+		    	pointerIndex[i] = e.findPointerIndex(mActivePointerId[i]);
+		    	x[i] = e.getX(pointerIndex[i]);
+		    	y[i] = e.getY(pointerIndex[i]);
+		    	//Log.d("pointer", "POINTER X ["+i+"] = "+x[i] );
+		    	//Log.d("pointer", "POINTER Y ["+i+"] = "+y[i] );
+		    }
+		}
 
-	    // Get the pointer's current position
-	    float x = e.getX(pointerIndex);
-	    float y = e.getY(pointerIndex);
-
-		//float x = e.getX();
-		//float y = e.getY();
-
-		Controls.isPointerMove = false;
+		mControls.isPointerMove = false;
 
 		switch (e.getAction()) {
 			case MotionEvent.ACTION_DOWN:
-				Log.d("ShaderActivity", "ACTION_DOWN" );
-				Controls.isPointerPressed = true;
-				mControls.setXPointer(x);
-				mControls.setYPointer(y);
+				//Log.d("ShaderActivity", "ACTION_DOWN" );
+				mControls.isPointerPressed = true;
+				mControls.handlePointer(x,y,pointCount);
+				mControls.setXPointer(x[0]);
+				mControls.setYPointer(y[0]);
 				break;
 			case MotionEvent.ACTION_POINTER_DOWN:
-				Log.d("ShaderActivity", "secondPonter ["+e.getX()+"]["+e.getY()+"]" );
+				//Log.d("ShaderActivity", "secondPonter ["+e.getX()+"]["+e.getY()+"]" );
 				break;
 			case MotionEvent.ACTION_UP:		// no mode
-				Log.d("ShaderActivity", "ACTION_UP" );
-				Controls.isPointerPressed = false;
+				//Log.d("ShaderActivity", "ACTION_UP" );
+				mControls.isPointerPressed = false;
 				break;
 			case MotionEvent.ACTION_POINTER_UP:
-				Log.d("ShaderActivity", "ACTION_POINTER_UP" );
+				//Log.d("ShaderActivity", "ACTION_POINTER_UP" );
 				break;
 			case MotionEvent.ACTION_MOVE:
 				//Log.d("ShaderActivity", "MotionEvent.ACTION_MOVE ["+x+"]["+y+"]" );
-				Controls.isPointerMove = true;
-				mControls.setXPointer(x);
-				mControls.setYPointer(y);
+				mControls.isPointerMove = true;
+				mControls.handlePointer(x,y,pointCount);
+				mControls.setXPointer(x[0]);
+				mControls.setYPointer(y[0]);
 				break;
 			default: 
-				Controls.isPointerMove = false;
+				mControls.isPointerMove = false;
 				break;
 		}
 		return gestureDetector.onTouchEvent(e);
